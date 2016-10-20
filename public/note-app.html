@@ -1,0 +1,92 @@
+<link rel="import" href="components/fb-elements.html">
+<link rel="import" href="bower_components/app-storage/app-indexeddb-mirror/app-indexeddb-mirror.html">
+<link rel="import" href="bower_components/polymerfire/polymerfire.html">
+
+<dom-module id="note-app">
+  <template>
+    <style include="oauth-app-shared-styles"></style>
+
+    <fb-toolbar
+        signed-in="[[signedIn]]"
+        on-sign-out="signOut">
+    </fb-toolbar>
+
+    <fb-login
+        on-sign-in="signIn"
+        signed-in="[[signedIn]]"
+        disabled="[[!online]]">
+    </fb-login>
+
+    <firebase-auth
+        id="auth"
+        app-name="notes"
+        provider="google"
+        signed-in="{{signedIn}}"
+        user="{{user}}">
+    </firebase-auth>
+
+    <firebase-query
+        id="query"
+        app-name="notes"
+        path="/notes/[[user.uid]]"
+        data="{{data}}">
+    </firebase-query>
+
+    <app-indexeddb-mirror
+        session="[[user.uid]]"
+        key="notes"
+        data="{{data}}"
+        persisted-data="{{persistedData}}">
+    </app-indexeddb-mirror>
+
+    <div class="notes">
+      <template is="dom-repeat" items="[[persistedData]]" as="note">
+        <fb-note
+            id$="[[note.$key]]"
+            title="[[note.title]]"
+            body="[[note.body]]"
+            on-tap="edit">
+        </fb-note>
+      </template>
+    </div>
+
+    <paper-fab icon="add" disabled="[[!online]]" on-tap="create"></paper-fab>
+
+    <firebase-document
+        id="document"
+        app-name="notes"
+        path="[[editableId]]"
+        data="{{editableNote}}">
+    </firebase-document>
+
+    <fb-editor
+        id="editor"
+        note="{{editableNote}}"
+        on-close="commitChange">
+    </fb-editor>
+
+  </template>
+  <script>
+    (() => {
+      'use strict';
+      Polymer({
+        is: 'note-app',
+        behaviors: [
+          Polymer.firebaseAppBehavior
+        ],
+        get isEditable() {
+          return this.online;
+        },
+        get dataPath() {
+          return `/notes/${this.user.uid}`;
+        },
+        toEditableId(dataId) {
+          return `${this.dataPath}/${dataId}`;
+        },
+        signIn() {
+          this.$.auth.signInWithPopup();
+        }
+      });
+    })();
+  </script>
+</dom-module>

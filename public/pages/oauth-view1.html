@@ -1,0 +1,75 @@
+<link rel="import" href="../components/fb-elements.html">
+<link rel="import" href="../bower_components/app-storage/app-indexeddb-mirror/app-indexeddb-mirror.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
+
+<dom-module id="oauth-view1">
+  <template>
+    <style include="oauth-app-shared-styles"></style>
+
+
+
+    <firebase-query
+        id="query"
+        app-name="oauthdb"
+        path="/notes/[[user.uid]]"
+        data="{{data}}">
+    </firebase-query>
+
+    <app-indexeddb-mirror
+        session="[[user.uid]]"
+        key="notes"
+        data="{{data}}"
+        persisted-data="{{persistedData}}">
+    </app-indexeddb-mirror>
+
+    <div class="notes">
+      <template is="dom-repeat" items="[[persistedData]]" as="note">
+        <fb-note
+            id$="[[note.$key]]"
+            title="[[note.title]]"
+            body="[[note.body]]"
+            on-tap="edit">
+        </fb-note>
+      </template>
+    </div>
+
+    <paper-fab icon="add" disabled="[[!online]]" on-tap="create"></paper-fab>
+
+    <firebase-document
+        id="document"
+        app-name="oauthdb"
+        path="[[editableId]]"
+        data="{{editableNote}}">
+    </firebase-document>
+
+    <fb-editor
+        id="editor"
+        note="{{editableNote}}"
+        on-close="commitChange">
+    </fb-editor>
+
+  </template>
+  <script>
+    (() => {
+      'use strict';
+      Polymer({
+        is: 'oauth-view1',
+         properties: {
+        },
+        behaviors: [
+           Polymer.firebaseAppBehavior
+        ],
+        get isEditable() {
+          return this.online;
+        },
+        get dataPath() {
+        // console.log(this.user.uid);
+          return `/notes/${this.user.uid}`;
+        },
+        toEditableId(dataId) {
+          return `${this.dataPath}/${dataId}`;
+        }
+      });
+    })();
+  </script>
+</dom-module>
